@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app" class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hotel Manager</title>
+
+    <link href="css/normalize.css" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap-theme.css"/>
+    <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body ng-controller="Main">
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html">Менеджер отелей</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li ng-show="!currentUser && !isAdmin"><a href="#/login">Вход</a></li>
+                <li><a href="#/hotels">Отели</a></li>
+                <li ng-show="isAdmin"><a href="#/options">Услуги отелей</a></li>
+                <li ng-show="isAdmin"><a href="#/users">Пользователи</a></li>
+                <li ng-show="isAdmin"><a href="#/orders">Заказы</a></li>
+                <li>
+                    <form style="margin-top: 8px;" class="form-inline">
+                        <div class="form-group">
+                            <label for="currency" class="text-info">Курс доллара</label>
+                            <input type="text" class="form-control" id="currency" placeholder="Введите курс доллара" ng-model="currency">
+                        </div>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div ng-view></div>
+
+<script type="angular/template" id="login">
+    <div class="container">
+        <form class="signInForm">
+            <h4>Пожалуйста авторизируйтесь</h4>
+            <input type="hidden" ng-model="id"/>
+            <label class="sr-only">Логин</label>
+            <input type="text" placeholder="Введите логин" class="form-control" ng-model="login"/>
+            <label class="sr-only">Пароль</label>
+            <input type="password" placeholder="Введите пароль" class="form-control" ng-model="password"/>
+            <div ng-show="action == 'register'">
+                <label class="sr-only">Имя</label>
+                <input type="text" placeholder="Имя" class="form-control other" ng-model="firstName"/>
+                <label class="sr-only">Фамилия</label>
+                <input type="text" placeholder="Фамилия" class="form-control other" ng-model="lastName"/>
+            </div>
+
+            <button class="btn btn-lg btn-primary btn-block" type="submit" ng-click="signin()" ng-show="action == ''">Войти</button>
+            <button class="btn btn-lg btn-success btn-block" type="submit" ng-click="register()" ng-show="action == 'register'">Зарегистрироваться</button>
+        </form>
+    </div>
+</script>
+
+<script type="angular/template" id="hotels">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Адрес</th>
+                        <th>Директор</th>
+                        <th>Телефон</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-show="hotels.length == 0">
+                        <td colspan="5">Отели не созданы</td>
+                    </tr>
+                    <tr ng-repeat="hotel in hotels" ng-show="hotels.length > 0">
+                        <td>{{hotel.hotelName}}</td>
+                        <td>{{hotel.hotelAddress}}</td>
+                        <td>{{hotel.hotelDirector}}</td>
+                        <td>{{hotel.hotelPhone}}</td>
+                        <td>
+                            <button class="btn btn-xs btn-success" ng-click="fnEdit(hotel)" ng-show="isAdmin">Изменить</button>
+                            <button class="btn btn-xs btn-danger" ng-click="fnDelete(hotel)" ng-show="isAdmin">Удалить</button>
+                            <a class="btn btn-xs btn-info" href="#/hotels/numbers/{{hotel.id}}">Номера</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" ng-show="!active && isAdmin">
+                <button ng-click="fnCreate()" class="btn btn-default btn-lg btn-block">Создать отель</button>
+            </div>
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" ng-show="(active == 'create' || active == 'edit') && isAdmin">
+                <h3>{{active=="create"?"Создание":"Измениие"}} отеля</h3>
+                <input type="hidden" ng-model="hotelId"/>
+                <div class="form-group">
+                    <label for="hotelName" class="sr-only">Название отеля</label>
+                    <input type="text" class="form-control" id="hotelName" ng-model="hotelName" placeholder="Введите название" required>
+                </div>
+                <div class="form-group">
+                    <label for="hotelAddress" class="sr-only">Адрес отеля</label>
+                    <input type="text" class="form-control" id="hotelAddress" ng-model="hotelAddress" placeholder="Введите адрес">
+                </div>
+                <div class="form-group">
+                    <label for="hotelDirector" class="sr-only">Имя директора</label>
+                    <input type="text" class="form-control" id="hotelDirector" ng-model="hotelDirector" placeholder="Введите имя">
+                </div>
+                <div class="form-group">
+                    <label for="hotelPhone" class="sr-only">Номер телефона</label>
+                    <input type="text" class="form-control" id="hotelPhone" ng-model="hotelPhone" placeholder="Введите номер">
+                </div>
+                <div class="form-group">
+                    <label for="hotelOptions" class="sr-only">Номер телефона</label>
+                    <select class="form-control" id="hotelOptions" ng-model="hotelOptions" multiple>
+                        <option value="{{option.id}}" ng-repeat="option in options">{{option.optionName}}</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <button ng-click="fnSave()" class="col-xs-5 btn btn-primary">Сохранить</button>
+                    <button ng-click="fnCancel()" class="col-xs-5 col-xs-offset-2 btn btn-danger">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+<script type="angular/template" id="hotelNumbers">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Расположение</th>
+                        <th>Вид номера</th>
+                        <th>Количество мест</th>
+                        <th>Цена номера ($)</th>
+                        <th>Цена номера (грн)</th>
+                        <th ng-show="isAdmin"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-show="hotelNumbers.length == 0">
+                        <td colspan="7">Номеров не найдено</td>
+                    </tr>
+                    <tr ng-repeat="number in hotelNumbers" ng-show="hotelNumbers.length > 0">
+                        <th>{{number.numberName}}</th>
+                        <th>{{number.numberPosition}}</th>
+                        <th>{{number.numberType}}</th>
+                        <th>{{number.numberPlaces}}</th>
+                        <td>{{number.numberPrice}}</td>
+                        <td>{{number.numberPrice * currency}}</td>
+                        <td ng-show="isAdmin">
+                            <button class="btn btn-xs btn-success" ng-click="fnEdit(number)">Изменить</button>
+                            <button class="btn btn-xs btn-danger" ng-click="fnDelete(number)">Удалить</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" ng-show="!active && isAdmin">
+                <button ng-click="fnCreate()" class="btn btn-default btn-lg btn-block">Добавить номер</button>
+            </div>
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" ng-show="(active == 'create' || active == 'edit') && isAdmin">
+                <h3>{{active=="create"?"Добавление":"Измениие"}} номера</h3>
+                <input type="hidden" ng-model="numberId"/>
+                <div class="form-group">
+                    <label for="numberName">№ номера</label>
+                    <input type="text" class="form-control" id="numberName" ng-model="numberName" placeholder="Введите №">
+                </div>
+                <div class="form-group">
+                    <label for="numberPosition">Расположение номера</label>
+                    <select class="form-control" id="numberPosition" ng-model="numberPosition">
+                        <option>Нижние этажи</option>
+                        <option>Верхние этажи</option>
+                        <option>С видом на океан</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="numberType">Тип номера</label>
+                    <select class="form-control" id="numberType" ng-model="numberType">
+                        <option>Стандарт</option>
+                        <option>Полулюкс</option>
+                        <option>Люкс</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="numberPlaces">Количество мест</label>
+                    <input type="text" class="form-control" id="numberPlaces" ng-model="numberPlaces" placeholder="Количество мест">
+                </div>
+                <div class="form-group">
+                    <label for="numberPrice">Цена номера</label>
+                    <input type="text" class="form-control" id="numberPrice" ng-model="numberPrice" placeholder="Цена номера">
+                </div>
+
+                <div class="row">
+                    <button ng-click="fnSave()" class="col-xs-5 btn btn-primary">Сохранить</button>
+                    <button ng-click="fnCancel()" class="col-xs-5 col-xs-offset-2 btn btn-danger">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="angular/template" id="options">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Название опции</th>
+                        <th>Цена опции ($)</th>
+                        <th>Цена опции (грн)</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-show="options.length == 0">
+                        <td colspan="4">Опций не найдено</td>
+                    </tr>
+                    <tr ng-repeat="option in options" ng-show="options.length > 0">
+                        <td>{{option.optionName}}</td>
+                        <td>{{option.optionPrice}}</td>
+                        <td>{{option.optionPrice * currency}}</td>
+                        <td>
+                            <button class="btn btn-xs btn-success" ng-click="fnEdit(option)">Изменить</button>
+                            <button class="btn btn-xs btn-danger" ng-click="fnDelete(option)">Удалить</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" ng-show="!active">
+                <button ng-click="fnCreate()" class="btn btn-default btn-lg btn-block">Добавить опцию</button>
+            </div>
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" ng-show="active == 'create' || active == 'edit'">
+                <h3>{{active=="create"?"Добавление":"Измениие"}} опции</h3>
+                <input type="hidden" ng-model="hotelId"/>
+                <div class="form-group">
+                    <label for="optionName" class="sr-only">Название опции</label>
+                    <input type="text" class="form-control" id="optionName" ng-model="optionName" placeholder="Введите название">
+                </div>
+                <div class="form-group">
+                    <label for="optionPrice" class="sr-only">Цена опции ($)</label>
+                    <input type="text" class="form-control" id="optionPrice" ng-model="optionPrice" placeholder="Введите цену">
+                </div>
+
+                <div class="row">
+                    <button ng-click="fnSave()" class="col-xs-5 btn btn-primary">Сохранить</button>
+                    <button ng-click="fnCancel()" class="col-xs-5 col-xs-offset-2 btn btn-danger">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="angular/template" id="users">
+    <div class="container">
+    </div>
+</script>
+<script type="angular/template" id="orders">
+    <div class="container">
+    </div>
+</script>
+
+<script src="js/jquery.js"></script>
+<script src="js/angular.js"></script>
+<script src="js/angular-route.js"></script>
+
+<!-- Firebase -->
+<script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
+
+<!-- AngularFire -->
+<script src="https://cdn.firebase.com/libs/angularfire/0.9.0/angularfire.min.js"></script>
+
+<script src="js/bootstrap.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
